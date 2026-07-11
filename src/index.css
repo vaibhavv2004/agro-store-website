@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .section-padding {
+    @apply py-20;
+  }
+  
+  .btn-primary-custom {
+    @apply bg-primary text-white px-[30px] py-[12px] rounded-[50px] transition-all duration-300 hover:bg-accent;
+  }
+
+  .btn-outline-success {
+    @apply border border-primary text-primary px-[30px] py-[12px] rounded-[50px] transition-all duration-300 hover:bg-primary hover:text-white;
+  }
+}
+
+/* Custom Float Animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-float-custom {
+  animation: float 4s ease-in-out infinite;
+}
