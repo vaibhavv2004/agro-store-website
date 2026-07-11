@@ -1,14 +1,14 @@
 function Gallery() {
   const images = [
-    { src: 'assests/images/gallery/gallery1.jpg', title: 'Store Front', desc: 'Eachur Agro Store entrance ready to serve customers.' },
-    { src: 'assests/images/gallery/gallery2.jpg', title: 'Organic Manure Section', desc: 'Various bio fertilizers and vermicompost stock.' },
-    { src: 'assests/images/gallery/gallery3.jpg', title: 'Premium Seed Rack', desc: 'Organized selection of high-yield vegetable seeds.' },
-    { src: 'assests/images/gallery/gallery4.jpg', title: 'Agricultural Sprayers', desc: 'Battery-operated and manual sprayer display.' },
-    { src: 'assests/images/gallery/gallery5.jpg', title: 'Crop Protection Shelf', desc: 'Authorized pesticides, fungicides and insecticides.' },
-    { src: 'assests/images/gallery/gallery6.jpg', title: 'Home Gardening Pots', desc: 'Terracotta, plastic pots and micro gardening tools.' },
-    { src: 'assests/images/gallery/gallery7.jpg', title: 'Drip Irrigation Fittings', desc: 'Sprinklers, drip lines, and water pipes for farm setups.' },
-    { src: 'assests/images/gallery/gallery8.jpg', title: 'Bio-stimulants Collection', desc: 'Organic booster sprays and growth regulators.' },
-    { src: 'assests/images/gallery/gallery9.jpg', title: 'Customer Consulting Desk', desc: 'Providing crop diagnostic support and guidelines.' }
+    { src: '/assets/images/gallery/gallery1.jpg', title: 'Store Front', desc: 'Eachur Agro Store entrance ready to serve customers.' },
+    { src: '/assets/images/gallery/gallery2.jpg', title: 'Organic Manure Section', desc: 'Various bio fertilizers and vermicompost stock.' },
+    { src: '/assets/images/gallery/gallery3.jpg', title: 'Premium Seed Rack', desc: 'Organized selection of high-yield vegetable seeds.' },
+    { src: '/assets/images/gallery/gallery4.jpg', title: 'Agricultural Sprayers', desc: 'Battery-operated and manual sprayer display.' },
+    { src: '/assets/images/gallery/gallery5.jpg', title: 'Crop Protection Shelf', desc: 'Authorized pesticides, fungicides and insecticides.' },
+    { src: '/assets/images/gallery/gallery6.jpg', title: 'Home Gardening Pots', desc: 'Terracotta, plastic pots and micro gardening tools.' },
+    { src: '/assets/images/gallery/gallery7.jpg', title: 'Drip Irrigation Fittings', desc: 'Sprinklers, drip lines, and water pipes for farm setups.' },
+    { src: '/assets/images/gallery/gallery8.jpg', title: 'Bio-stimulants Collection', desc: 'Organic booster sprays and growth regulators.' },
+    { src: '/assets/images/gallery/gallery9.jpg', title: 'Customer Consulting Desk', desc: 'Providing crop diagnostic support and guidelines.' }
   ];
 
   return (

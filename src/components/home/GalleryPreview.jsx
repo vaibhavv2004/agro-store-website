@@ -2,12 +2,12 @@ import { Link } from 'react-router-dom';
 
 function GalleryPreview() {
   const images = [
-    { src: 'assests/images/gallery/gallery1.jpg', alt: 'Agro Store Front' },
-    { src: 'assests/images/gallery/gallery2.jpg', alt: 'Fertilizer Stock' },
-    { src: 'assests/images/gallery/gallery3.jpg', alt: 'Seed Packets' },
-    { src: 'assests/images/gallery/gallery4.jpg', alt: 'Sprayers Selection' },
-    { src: 'assests/images/gallery/gallery5.jpg', alt: 'Organic Pesticides' },
-    { src: 'assests/images/gallery/gallery6.jpg', alt: 'Gardening Tools' }
+    { src: '/assets/images/gallery/gallery1.jpg', alt: 'Agro Store Front' },
+    { src: '/assets/images/gallery/gallery2.jpg', alt: 'Fertilizer Stock' },
+    { src: '/assets/images/gallery/gallery3.jpg', alt: 'Seed Packets' },
+    { src: '/assets/images/gallery/gallery4.jpg', alt: 'Sprayers Selection' },
+    { src: '/assets/images/gallery/gallery5.jpg', alt: 'Organic Pesticides' },
+    { src: '/assets/images/gallery/gallery6.jpg', alt: 'Gardening Tools' }
   ];
 
   return (

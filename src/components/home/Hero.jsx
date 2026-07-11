@@ -52,7 +52,7 @@ function Hero() {
           {/* Right Image */}
           <div className="flex justify-center h-full min-h-[350px] lg:min-h-full">
             <img 
-              src="assests/images/hero/hero.png" 
+              src="/assets/images/hero/hero2.jpg" 
               alt="Agriculture Hero" 
               className="w-full h-full object-cover rounded-[20px] animate-float-custom"
               onError={(e) => {

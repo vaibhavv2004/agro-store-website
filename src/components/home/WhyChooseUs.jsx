@@ -41,7 +41,7 @@ function WhyChooseUs() {
           {/* Right Image */}
           <div className="flex justify-center lg:justify-end">
             <img 
-              src="assests/images/about/store.png" 
+              src="/assets/images/about/store.png" 
               alt="Eachur Agro Store"
               className="rounded-[20px] shadow-lg max-w-[500px] w-full object-cover"
               onError={(e) => {

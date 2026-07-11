@@ -145,7 +145,7 @@ function Contact() {
             {/* Visual Store Map Placeholder */}
             <div className="rounded-custom overflow-hidden shadow-sm aspect-video bg-gray-150 relative">
               <img 
-                src="assests/images/about/store.png" 
+                src="/assets/images/about/store.png" 
                 alt="Store Map Location" 
                 className="w-full h-full object-cover"
                 onError={(e) => {
