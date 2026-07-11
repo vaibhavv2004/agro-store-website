@@ -10,11 +10,13 @@ import Contact from './pages/Contact';
 import Cart from './pages/Cart';
 import Admin from './pages/Admin';
 import { CartProvider } from './context/CartContext';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
     <CartProvider>
       <Router>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />

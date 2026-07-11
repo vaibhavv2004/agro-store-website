@@ -39,6 +39,16 @@ function Categories() {
             </div>
           ))}
         </div>
+
+        {/* View More Button */}
+        <div className="text-center mt-12">
+          <button
+            onClick={() => navigate('/products')}
+            className="btn-primary-custom inline-flex items-center gap-2"
+          >
+            View More Products <i className="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
       </div>
     </section>
   );

@@ -48,6 +48,9 @@ function Cart() {
 
     // Open WhatsApp in a new tab
     window.open(whatsappUrl, '_blank');
+    
+    // Clear the cart after placing the order
+    clearCart();
   };
 
   if (cart.length === 0) {

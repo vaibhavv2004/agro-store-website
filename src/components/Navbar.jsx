@@ -30,7 +30,8 @@ function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="text-2xl font-bold text-primary flex items-center gap-2">
-              🌿 <span className="hidden sm:inline">Eachur Agro Store</span>
+              <img src="/favicon.jpg" alt="Logo" className="w-8 h-8 rounded-full" />
+              <span className="hidden sm:inline">Eachur Agro Store</span>
               <span className="sm:hidden">Eachur Agro</span>
             </Link>
           </div>

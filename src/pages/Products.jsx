@@ -18,14 +18,14 @@ const ALL_PRODUCTS = [
   { id: 12, name: 'Premium Hand Trowel', category: 'Garden Products', price: '₹110', img: 'trowel.jpg', desc: 'Ergonomic stainless steel hand trowel for planting.' }
 ];
 
-const CATEGORIES = ['All', 'Seeds', 'Fertilizers', 'Crop Protection', 'Organic Products', 'Sprayers', 'Garden Products'];
+const BASE_CATEGORIES = ['All', 'Seeds', 'Fertilizers', 'Crop Protection', 'Organic Products', 'Sprayers', 'Garden Products'];
 
 function Products() {
   const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [categories, setCategories] = useState(BASE_CATEGORIES);
   const [searchQuery, setSearchQuery] = useState('');
-  const { addToCart } = useCart();
-  const [addedItemIds, setAddedItemIds] = useState({});
+  const { cart, addToCart, updateQuantity } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,8 +48,12 @@ function Products() {
 
       if (data && data.length > 0) {
         setProducts(data);
+        const uniqueCategories = [...new Set(data.map(p => p.category))];
+        setCategories(['All', ...new Set([...BASE_CATEGORIES.slice(1), ...uniqueCategories])]);
       } else {
         setProducts(ALL_PRODUCTS);
+        const uniqueCategories = [...new Set(ALL_PRODUCTS.map(p => p.category))];
+        setCategories(['All', ...new Set([...BASE_CATEGORIES.slice(1), ...uniqueCategories])]);
       }
     } catch (err) {
       console.warn('Could not fetch products from database, using fallback data:', err.message);
@@ -59,12 +63,8 @@ function Products() {
     }
   };
 
-  const handleAddToCart = (product) => {
-    addToCart(product);
-    setAddedItemIds((prev) => ({ ...prev, [product.id]: true }));
-    setTimeout(() => {
-      setAddedItemIds((prev) => ({ ...prev, [product.id]: false }));
-    }, 1500);
+  const getCartItem = (productId) => {
+    return cart.find(item => item.id === productId);
   };
 
   const filteredProducts = products.filter(product => {
@@ -102,7 +102,7 @@ function Products() {
 
               <h3 className="text-lg font-bold text-dark mb-4">Categories</h3>
               <div className="flex flex-wrap lg:flex-col gap-2">
-                {CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
@@ -150,24 +150,38 @@ function Products() {
                       </div>
                       <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-auto">
                         <span className="text-primary font-bold text-lg">{prod.price}</span>
-                        <button
-                          onClick={() => handleAddToCart(prod)}
-                          className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                            addedItemIds[prod.id]
-                              ? 'bg-secondary text-white scale-95'
-                              : 'bg-primary text-white hover:bg-accent'
-                          }`}
-                        >
-                          {addedItemIds[prod.id] ? (
-                            <>
-                              <i className="fa-solid fa-check"></i> Added!
-                            </>
-                          ) : (
-                            <>
+                        {(() => {
+                          const cartItem = getCartItem(prod.id);
+                          if (cartItem) {
+                            return (
+                              <div className="flex items-center border border-primary/20 rounded-full overflow-hidden bg-primary/5">
+                                <button
+                                  onClick={() => updateQuantity(prod.id, cartItem.quantity - 1)}
+                                  className="px-3 py-1.5 hover:bg-primary hover:text-white text-primary font-bold transition-colors"
+                                >
+                                  -
+                                </button>
+                                <span className="px-3 py-1.5 text-dark font-bold text-sm min-w-[32px] text-center">
+                                  {cartItem.quantity}
+                                </span>
+                                <button
+                                  onClick={() => updateQuantity(prod.id, cartItem.quantity + 1)}
+                                  className="px-3 py-1.5 hover:bg-primary hover:text-white text-primary font-bold transition-colors"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            );
+                          }
+                          return (
+                            <button
+                              onClick={() => addToCart(prod)}
+                              className="px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 bg-primary text-white hover:bg-accent"
+                            >
                               <i className="fa-solid fa-cart-plus"></i> Add to Cart
-                            </>
-                          )}
-                        </button>
+                            </button>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>

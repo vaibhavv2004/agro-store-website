@@ -56,7 +56,13 @@ function Admin() {
     if (error) {
       console.error('Error fetching products:', error);
     } else {
-      setProducts(data || []);
+      const fetchedProducts = data || [];
+      setProducts(fetchedProducts);
+      
+      const uniqueCategories = [...new Set(fetchedProducts.map(p => p.category))];
+      const baseCategories = ['Seeds', 'Fertilizers', 'Crop Protection', 'Organic Products', 'Sprayers', 'Garden Products'];
+      const allCategories = [...new Set([...baseCategories, ...uniqueCategories])];
+      setCategories(allCategories);
     }
     setLoading(false);
   };
@@ -321,18 +327,20 @@ function Admin() {
 
                 <div>
                   <label className="block text-xs font-semibold text-dark mb-1">Category *</label>
-                  <select
+                  <input
+                    list="category-options"
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
+                    required
+                    placeholder="Select or type a category"
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
-                  >
+                  />
+                  <datalist id="category-options">
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
+                      <option key={cat} value={cat} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
 
                 <div>
