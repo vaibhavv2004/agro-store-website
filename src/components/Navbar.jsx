@@ -53,7 +53,7 @@ function Navbar() {
               <Link
                 key={link.name}
                 to={link.path}
-                className={`text-sm font-medium transition-colors duration-300 hover:text-primary ${
+                className={`text-sm font-medium transition-colors duration-300 hover:text-primary notranslate ${
                   isActive(link.path) ? 'text-primary font-semibold' : 'text-dark'
                 }`}
               >
@@ -64,7 +64,7 @@ function Navbar() {
             {/* About Us Dropdown Menu */}
             <div className="relative group z-50">
               <button 
-                className={`text-sm font-medium transition-colors duration-300 hover:text-primary flex items-center gap-1 focus:outline-none py-2 ${
+                className={`text-sm font-medium transition-colors duration-300 hover:text-primary flex items-center gap-1 focus:outline-none py-2 notranslate ${
                   aboutDropdownLinks.some(link => isActive(link.path)) ? 'text-primary font-semibold' : 'text-dark'
                 }`}
               >
@@ -75,7 +75,7 @@ function Navbar() {
                   <Link 
                     key={link.name}
                     to={link.path} 
-                    className={`block w-full text-left px-4 py-2.5 text-sm hover:bg-primary-light hover:text-primary transition-colors ${
+                    className={`block w-full text-left px-4 py-2.5 text-sm hover:bg-primary-light hover:text-primary transition-colors notranslate ${
                       isActive(link.path) ? 'text-primary bg-primary-light/30 font-semibold' : 'text-dark'
                     }`}
                   >
@@ -164,7 +164,7 @@ function Navbar() {
               key={link.name}
               to={link.path}
               onClick={() => setIsOpen(false)}
-              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-300 ${
+              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-300 notranslate ${
                 isActive(link.path)
                   ? 'bg-primary-light text-primary font-semibold'
                   : 'text-dark hover:bg-gray-50 hover:text-primary'
@@ -176,7 +176,7 @@ function Navbar() {
 
           {/* Mobile About Us Submenu */}
           <div className="px-3 py-2 border-t border-gray-100">
-            <span className="text-xs font-semibold text-lightText uppercase tracking-wider block mb-1">
+            <span className="text-xs font-semibold text-lightText uppercase tracking-wider block mb-1 notranslate">
               {getAboutUsLabel()}
             </span>
             <div className="pl-3 border-l-2 border-gray-150 space-y-1 mt-1">
@@ -185,7 +185,7 @@ function Navbar() {
                   key={link.name}
                   to={link.path}
                   onClick={() => setIsOpen(false)}
-                  className={`block px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-300 ${
+                  className={`block px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-300 notranslate ${
                     isActive(link.path)
                       ? 'bg-primary-light text-primary font-semibold'
                       : 'text-dark hover:bg-gray-50 hover:text-primary'

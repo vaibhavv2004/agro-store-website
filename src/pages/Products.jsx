@@ -20,7 +20,9 @@ import { useLanguage } from '../context/LanguageContext';
 function Products() {
   const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
+  const [subcategories, setSubcategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const { cart, addToCart, updateQuantity } = useCart();
   const [products, setProducts] = useState([]);
@@ -33,6 +35,11 @@ function Products() {
     }
     fetchCategoriesAndProducts();
   }, [location]);
+
+  // Reset subcategory selection when the main category changes
+  useEffect(() => {
+    setSelectedSubcategory('All');
+  }, [selectedCategory]);
 
   const fetchCategoriesAndProducts = async () => {
     try {
@@ -50,7 +57,17 @@ function Products() {
         setCategories(FALLBACK_CATEGORIES);
       }
 
-      // 2. Fetch products
+      // 2. Fetch subcategories
+      const { data: subData, error: subError } = await supabase
+        .from('subcategories')
+        .select('*')
+        .order('name', { ascending: true });
+        
+      if (!subError && subData) {
+        setSubcategories(subData);
+      }
+
+      // 3. Fetch products
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -77,15 +94,62 @@ function Products() {
   };
 
   const getCategoryTranslation = (cat) => {
+    const translations = {
+      en: {
+        'All': 'All Categories',
+        'Seeds': 'Seeds',
+        'Fertilizers': 'Fertilizers',
+        'Crop Protection': 'Crop Protection',
+        'Organic Products': 'Organic Products',
+        'Sprayers': 'Sprayers',
+        'Garden Products': 'Garden Products'
+      },
+      ml: {
+        'All': 'എല്ലാ വിഭാഗങ്ങളും',
+        'Seeds': 'വിത്തുകൾ',
+        'Fertilizers': 'വളങ്ങൾ',
+        'Crop Protection': 'കീടനാശിനികൾ',
+        'Organic Products': 'ജൈവ ഉൽപ്പന്നങ്ങൾ',
+        'Sprayers': 'സ്പ്രേയറുകൾ',
+        'Garden Products': 'തോട്ടക്കല ഉപകരണങ്ങൾ'
+      },
+      ta: {
+        'All': 'அனைத்து பிரிவுகள்',
+        'Seeds': 'விதைகள்',
+        'Fertilizers': 'உரங்கள்',
+        'Crop Protection': 'பயிர் பாதுகாப்பு',
+        'Organic Products': 'கரிம தயாரிப்புகள்',
+        'Sprayers': 'தெளிப்பான்கள்',
+        'Garden Products': 'தோட்ட தயாரிப்புகள்'
+      },
+      hi: {
+        'All': 'सभी श्रेणियां',
+        'Seeds': 'बीज',
+        'Fertilizers': 'उर्वरक',
+        'Crop Protection': 'फसल सुरक्षा',
+        'Organic Products': 'जैविक उत्पाद',
+        'Sprayers': 'स्प्रेयर',
+        'Garden Products': 'उद्यान उत्पाद'
+      }
+    };
+    
+    // Check current language
+    const currentLang = localStorage.getItem('agro_store_lang') || 'en';
+    if (translations[currentLang] && translations[currentLang][cat]) {
+      return translations[currentLang][cat];
+    }
     return cat;
   };
 
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+    const matchesSubcategory = selectedCategory === 'All' || selectedSubcategory === 'All' || !selectedSubcategory || product.subcategory === selectedSubcategory;
     const matchesSearch = translateDbText(product, 'name').toLowerCase().includes(searchQuery.toLowerCase()) || 
                           translateDbText(product, product.description ? 'description' : 'desc').toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesSubcategory && matchesSearch;
   });
+
+  const activeSubcategories = subcategories.filter(sub => sub.category_name === selectedCategory);
 
   return (
     <div className="bg-background min-h-screen pb-16">
@@ -155,12 +219,42 @@ function Products() {
 
           {/* Products Grid */}
           <div className="w-full lg:w-3/4">
+            
+            {/* Subcategories Horizontal Pills Filter */}
+            {selectedCategory !== 'All' && activeSubcategories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-8 animate-fade-in bg-white p-4 rounded-custom border border-gray-100 shadow-sm">
+                <button
+                  onClick={() => setSelectedSubcategory('All')}
+                  className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all ${
+                    selectedSubcategory === 'All'
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-gray-50 text-dark border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  All {getCategoryTranslation(selectedCategory)}
+                </button>
+                {activeSubcategories.map((sub) => (
+                  <button
+                    key={sub.id}
+                    onClick={() => setSelectedSubcategory(sub.name)}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all ${
+                      selectedSubcategory === sub.name
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'bg-gray-50 text-dark border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    {sub.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {loading && products.length === 0 ? (
               <div className="bg-white rounded-custom shadow-sm py-12">
                 <Loader message="Nourishing the catalog..." />
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-custom shadow-sm">
+              <div className="text-center py-20 bg-white rounded-custom shadow-sm border border-gray-100">
                 <p className="text-lightText text-lg">No products found matching your filter.</p>
               </div>
             ) : (
@@ -180,6 +274,11 @@ function Products() {
                       <span className="absolute top-3 right-3 bg-secondary text-white text-xs font-semibold px-2.5 py-1 rounded-full">
                         {getCategoryTranslation(prod.category)}
                       </span>
+                      {prod.subcategory && (
+                        <span className="absolute bottom-3 left-3 bg-primary text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm animate-fade-in">
+                          {prod.subcategory}
+                        </span>
+                      )}
                     </div>
                     <div className="p-5 flex-grow flex flex-col justify-between">
                       <div>
@@ -199,9 +298,7 @@ function Products() {
                                 >
                                   -
                                 </button>
-                                <span className="px-3 py-1.5 text-dark font-bold text-sm min-w-[32px] text-center">
-                                  {cartItem.quantity}
-                                </span>
+                                <span className="px-3 text-dark text-sm font-semibold">{cartItem.quantity}</span>
                                 <button
                                   onClick={() => updateQuantity(prod.id, cartItem.quantity + 1)}
                                   className="px-3 py-1.5 hover:bg-primary hover:text-white text-primary font-bold transition-colors"
@@ -214,9 +311,9 @@ function Products() {
                           return (
                             <button
                               onClick={() => addToCart(prod)}
-                              className="px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 bg-primary text-white hover:bg-accent"
+                              className="bg-primary hover:bg-accent text-white px-4 py-2 rounded-full text-xs font-semibold transition-colors duration-300 flex items-center gap-1"
                             >
-                              <i className="fa-solid fa-cart-plus"></i> Add to Cart
+                              <i className="fa-solid fa-cart-plus"></i> Add
                             </button>
                           );
                         })()}

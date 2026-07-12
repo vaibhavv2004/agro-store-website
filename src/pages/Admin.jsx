@@ -11,12 +11,14 @@ function Admin() {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
   
-  // Dashboard Tabs: 'products' | 'categories' | 'gallery'
+  // Dashboard Tabs: 'products' | 'categories' | 'brands' | 'gallery'
   const [activeTab, setActiveTab] = useState('products');
 
   // State Lists
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [galleryImages, setGalleryImages] = useState([]);
 
   // Loading States
@@ -28,6 +30,7 @@ function Admin() {
   const [productFormData, setProductFormData] = useState({
     name: '',
     category: '',
+    subcategory: '',
     price: '',
     description: '',
     img_url: '',
@@ -37,9 +40,26 @@ function Admin() {
   const [productUploading, setProductUploading] = useState(false);
   const [productFormMessage, setProductFormMessage] = useState(null);
 
-  // Forms State - Categories
+  // Forms State - Categories & Subcategories
   const [categoryName, setCategoryName] = useState('');
   const [categoryFormMessage, setCategoryFormMessage] = useState(null);
+  
+  const [subcategoryName, setSubcategoryName] = useState('');
+  const [subcategoryParent, setSubcategoryParent] = useState('');
+  const [subcategoryFormMessage, setSubcategoryFormMessage] = useState(null);
+
+  // Forms State - Brands
+  const [editBrandMode, setEditBrandMode] = useState(false);
+  const [selectedBrandId, setSelectedBrandId] = useState(null);
+  const [brandFormData, setBrandFormData] = useState({
+    name: '',
+    category: '',
+    desc_text: '',
+    logo_url: '',
+  });
+  const [brandLogoFile, setBrandLogoFile] = useState(null);
+  const [brandUploading, setBrandUploading] = useState(false);
+  const [brandFormMessage, setBrandFormMessage] = useState(null);
 
   // Forms State - Gallery
   const [galleryImageFile, setGalleryImageFile] = useState(null);
@@ -62,7 +82,9 @@ function Admin() {
   useEffect(() => {
     if (session) {
       fetchCategories();
+      fetchSubcategories();
       fetchProducts();
+      fetchBrands();
       fetchGalleryImages();
     }
   }, [session]);
@@ -95,10 +117,46 @@ function Admin() {
     } else {
       const fetchedCats = data || [];
       setCategories(fetchedCats);
-      // Set default selected category for product form if empty
-      if (fetchedCats.length > 0 && !productFormData.category) {
-        setProductFormData(prev => ({ ...prev, category: fetchedCats[0].name }));
+      
+      // Default selections
+      if (fetchedCats.length > 0) {
+        if (!productFormData.category) {
+          setProductFormData(prev => ({ ...prev, category: fetchedCats[0].name }));
+        }
+        if (!subcategoryParent) {
+          setSubcategoryParent(fetchedCats[0].name);
+        }
+        if (!brandFormData.category) {
+          setBrandFormData(prev => ({ ...prev, category: fetchedCats[0].name }));
+        }
       }
+    }
+  };
+
+  const fetchSubcategories = async () => {
+    const { data, error } = await supabase
+      .from('subcategories')
+      .select('*')
+      .order('category_name', { ascending: true })
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching subcategories:', error);
+    } else {
+      setSubcategories(data || []);
+    }
+  };
+
+  const fetchBrands = async () => {
+    const { data, error } = await supabase
+      .from('brands')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching brands:', error);
+    } else {
+      setBrands(data || []);
     }
   };
 
@@ -185,6 +243,15 @@ function Admin() {
     }
   };
 
+  const handleBrandFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setBrandLogoFile(file);
+    } else {
+      setBrandLogoFile(null);
+    }
+  };
+
   // --- PRODUCT SUBMIT HANDLERS ---
   const handleProductSubmit = async (e) => {
     e.preventDefault();
@@ -208,6 +275,7 @@ function Admin() {
     const payload = {
       name: productFormData.name,
       category: productFormData.category || (categories[0]?.name || 'Seeds'),
+      subcategory: productFormData.subcategory || null,
       price: productFormData.price.startsWith('₹') ? productFormData.price : `₹${productFormData.price}`,
       description: productFormData.description,
       img_url: finalImgUrl || DEFAULT_FALLBACK_IMAGE,
@@ -248,6 +316,7 @@ function Admin() {
     setProductFormData({
       name: product.name,
       category: product.category,
+      subcategory: product.subcategory || '',
       price: product.price.replace('₹', ''),
       description: product.description || '',
       img_url: product.img_url,
@@ -280,6 +349,7 @@ function Admin() {
     setProductFormData({
       name: '',
       category: categories[0]?.name || 'Seeds',
+      subcategory: '',
       price: '',
       description: '',
       img_url: '',
@@ -288,7 +358,7 @@ function Admin() {
     setProductImageDimensions(null);
   };
 
-  // --- CATEGORIES HANDLERS ---
+  // --- CATEGORIES & SUBCATEGORIES HANDLERS ---
   const handleCategorySubmit = async (e) => {
     e.preventDefault();
     if (!categoryName.trim()) return;
@@ -325,6 +395,145 @@ function Admin() {
       }
       setLoading(false);
     }
+  };
+
+  const handleSubcategorySubmit = async (e) => {
+    e.preventDefault();
+    if (!subcategoryName.trim() || !subcategoryParent) return;
+
+    setLoading(true);
+    setSubcategoryFormMessage(null);
+
+    const { error } = await supabase
+      .from('subcategories')
+      .insert([{
+        name: subcategoryName.trim(),
+        category_name: subcategoryParent
+      }]);
+
+    if (error) {
+      setSubcategoryFormMessage({ type: 'error', text: error.message });
+    } else {
+      setSubcategoryFormMessage({ type: 'success', text: `Subcategory "${subcategoryName}" added inside "${subcategoryParent}"!` });
+      setSubcategoryName('');
+      fetchSubcategories();
+    }
+    setLoading(false);
+  };
+
+  const handleSubcategoryDeleteClick = async (subcatId, subcatName) => {
+    if (window.confirm(`Are you sure you want to delete subcategory "${subcatName}"?`)) {
+      setLoading(true);
+      const { error } = await supabase
+        .from('subcategories')
+        .delete()
+        .eq('id', subcatId);
+
+      if (error) {
+        alert('Error deleting subcategory: ' + error.message);
+      } else {
+        fetchSubcategories();
+      }
+      setLoading(false);
+    }
+  };
+
+  // --- BRANDS HANDLERS ---
+  const handleBrandSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setBrandFormMessage(null);
+
+    let finalLogoUrl = brandFormData.logo_url;
+
+    if (brandLogoFile) {
+      setBrandUploading(true);
+      const uploadedUrl = await uploadImageToStorage(brandLogoFile, 'brands');
+      setBrandUploading(false);
+      if (uploadedUrl) {
+        finalLogoUrl = uploadedUrl;
+      } else {
+        setLoading(false);
+        return;
+      }
+    }
+
+    const payload = {
+      name: brandFormData.name,
+      category: brandFormData.category || (categories[0]?.name || 'Seeds'),
+      desc_text: brandFormData.desc_text,
+      logo_url: finalLogoUrl || null,
+    };
+
+    if (editBrandMode) {
+      const { error } = await supabase
+        .from('brands')
+        .update(payload)
+        .eq('id', selectedBrandId);
+
+      if (error) {
+        setBrandFormMessage({ type: 'error', text: error.message });
+      } else {
+        setBrandFormMessage({ type: 'success', text: 'Brand updated successfully!' });
+        resetBrandForm();
+        fetchBrands();
+      }
+    } else {
+      const { error } = await supabase
+        .from('brands')
+        .insert([payload]);
+
+      if (error) {
+        setBrandFormMessage({ type: 'error', text: error.message });
+      } else {
+        setBrandFormMessage({ type: 'success', text: 'Brand added successfully!' });
+        resetBrandForm();
+        fetchBrands();
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleBrandEditClick = (brand) => {
+    setEditBrandMode(true);
+    setSelectedBrandId(brand.id);
+    setBrandFormData({
+      name: brand.name,
+      category: brand.category,
+      desc_text: brand.desc_text || '',
+      logo_url: brand.logo_url || '',
+    });
+    setBrandLogoFile(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBrandDeleteClick = async (brandId) => {
+    if (window.confirm('Are you sure you want to delete this brand?')) {
+      setLoading(true);
+      const { error } = await supabase
+        .from('brands')
+        .delete()
+        .eq('id', brandId);
+
+      if (error) {
+        alert('Error deleting brand: ' + error.message);
+      } else {
+        fetchBrands();
+      }
+      setLoading(false);
+    }
+  };
+
+  const resetBrandForm = () => {
+    setEditBrandMode(false);
+    setSelectedBrandId(null);
+    setBrandFormData({
+      name: '',
+      category: categories[0]?.name || 'Seeds',
+      desc_text: '',
+      logo_url: '',
+    });
+    setBrandLogoFile(null);
   };
 
   // --- GALLERY HANDLERS ---
@@ -391,7 +600,6 @@ function Admin() {
 
     setLoading(true);
 
-    // Swap created_at timestamps in the database to rearrange sorting dynamically on the fly
     const timeIndex = newImages[index].created_at;
     const timeTarget = newImages[targetIndex].created_at;
 
@@ -410,6 +618,11 @@ function Admin() {
     await fetchGalleryImages();
     setLoading(false);
   };
+
+  // Filter subcategories matching current product category selection
+  const activeProductSubcategories = subcategories.filter(
+    sub => sub.category_name === productFormData.category
+  );
 
   // --- LOGIN SCREEN ---
   if (!session) {
@@ -488,7 +701,7 @@ function Admin() {
         </div>
 
         {/* Tab selection */}
-        <div className="flex border-b border-gray-200 mb-8 gap-2">
+        <div className="flex border-b border-gray-200 mb-8 gap-2 overflow-x-auto whitespace-nowrap pb-2">
           <button
             onClick={() => setActiveTab('products')}
             className={`px-5 py-2.5 font-bold text-sm border-b-2 transition-all ${
@@ -508,6 +721,16 @@ function Admin() {
             }`}
           >
             🏷️ Categories
+          </button>
+          <button
+            onClick={() => setActiveTab('brands')}
+            className={`px-5 py-2.5 font-bold text-sm border-b-2 transition-all ${
+              activeTab === 'brands'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-lightText hover:text-dark'
+            }`}
+          >
+            🤝 Partner Brands
           </button>
           <button
             onClick={() => setActiveTab('gallery')}
@@ -558,12 +781,26 @@ function Admin() {
                     <label className="block text-xs font-semibold text-dark mb-1">Category *</label>
                     <select
                       value={productFormData.category}
-                      onChange={(e) => setProductFormData({ ...productFormData, category: e.target.value })}
+                      onChange={(e) => setProductFormData({ ...productFormData, category: e.target.value, subcategory: '' })}
                       required
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+                      className="w-full h-10 px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white text-dark custom-select"
                     >
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-dark mb-1">Subcategory (Optional)</label>
+                    <select
+                      value={productFormData.subcategory}
+                      onChange={(e) => setProductFormData({ ...productFormData, subcategory: e.target.value })}
+                      className="w-full h-10 px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white text-dark custom-select"
+                    >
+                      <option value="">None / Plain Category</option>
+                      {activeProductSubcategories.map((sub) => (
+                        <option key={sub.id} value={sub.name}>{sub.name}</option>
                       ))}
                     </select>
                   </div>
@@ -661,7 +898,7 @@ function Admin() {
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-dark uppercase">
                           <th className="p-4">Item</th>
-                          <th className="p-4">Category</th>
+                          <th className="p-4">Category / Sub</th>
                           <th className="p-4">Price</th>
                           <th className="p-4 text-center">Actions</th>
                         </tr>
@@ -687,9 +924,16 @@ function Admin() {
                               </div>
                             </td>
                             <td className="p-4">
-                              <span className="text-xs bg-secondary/10 text-secondary px-2.5 py-0.5 rounded-full font-medium">
-                                {prod.category}
-                              </span>
+                              <div className="flex flex-col gap-1 items-start">
+                                <span className="text-[10px] bg-secondary/10 text-secondary px-2 py-0.5 rounded-full font-medium">
+                                  {prod.category}
+                                </span>
+                                {prod.subcategory && (
+                                  <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                                    ↳ {prod.subcategory}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="p-4 font-semibold text-primary">{prod.price}</td>
                             <td className="p-4">
@@ -723,12 +967,12 @@ function Admin() {
 
         {/* --- CATEGORIES TAB --- */}
         {activeTab === 'categories' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
-            {/* Left Column: Form */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-custom p-6 shadow-custom border border-gray-100 sticky top-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
+            {/* Categories Administration Box */}
+            <div className="space-y-8">
+              <div className="bg-white rounded-custom p-6 shadow-custom border border-gray-100">
                 <h3 className="text-lg font-bold text-dark mb-4 border-b border-gray-100 pb-2">
-                  Add New Category
+                  Add New Parent Category
                 </h3>
 
                 {categoryFormMessage && (
@@ -763,36 +1007,298 @@ function Admin() {
                   </button>
                 </form>
               </div>
+
+              {/* Categories Catalog */}
+              <div className="bg-white rounded-custom shadow-custom border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <h3 className="text-lg font-bold text-dark">Parent Category Catalog</h3>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-dark uppercase">
+                        <th className="p-4">Category Name</th>
+                        <th className="p-4 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-sm">
+                      {categories.map((cat) => (
+                        <tr key={cat.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="p-4 font-semibold text-dark">{cat.name}</td>
+                          <td className="p-4">
+                            <div className="flex justify-center">
+                              <button
+                                onClick={() => handleCategoryDeleteClick(cat.id, cat.name)}
+                                className="text-red-500 hover:text-red-700 transition-colors"
+                                title="Delete"
+                              >
+                                <i className="fa-solid fa-trash-can text-base"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
-            {/* Right Column: Listing */}
+            {/* Subcategories Administration Box */}
+            <div className="space-y-8">
+              <div className="bg-white rounded-custom p-6 shadow-custom border border-gray-100">
+                <h3 className="text-lg font-bold text-dark mb-4 border-b border-gray-100 pb-2">
+                  Add New Subcategory
+                </h3>
+
+                {subcategoryFormMessage && (
+                  <div
+                    className={`p-3 rounded-lg text-sm mb-4 ${
+                      subcategoryFormMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+                    }`}
+                  >
+                    {subcategoryFormMessage.text}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubcategorySubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-dark mb-1">Parent Category *</label>
+                    <select
+                      value={subcategoryParent}
+                      onChange={(e) => setSubcategoryParent(e.target.value)}
+                      required
+                      className="w-full h-10 px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white text-dark custom-select"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-dark mb-1">Subcategory Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={subcategoryName}
+                      onChange={(e) => setSubcategoryName(e.target.value)}
+                      placeholder="e.g. Tomato (inside Seeds)"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-primary hover:bg-accent text-white py-2 rounded-full text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Saving...' : 'Add Subcategory'}
+                  </button>
+                </form>
+              </div>
+
+              {/* Subcategories Catalog */}
+              <div className="bg-white rounded-custom shadow-custom border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <h3 className="text-lg font-bold text-dark">Subcategory Catalog</h3>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-dark uppercase">
+                        <th className="p-4">Subcategory Name</th>
+                        <th className="p-4">Parent Category</th>
+                        <th className="p-4 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-sm">
+                      {subcategories.map((sub) => (
+                        <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="p-4 font-semibold text-dark">{sub.name}</td>
+                          <td className="p-4">
+                            <span className="text-xs bg-secondary/10 text-secondary px-2.5 py-0.5 rounded-full font-medium">
+                              {sub.category_name}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex justify-center">
+                              <button
+                                onClick={() => handleSubcategoryDeleteClick(sub.id, sub.name)}
+                                className="text-red-500 hover:text-red-700 transition-colors"
+                                title="Delete"
+                              >
+                                <i className="fa-solid fa-trash-can text-base"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- BRANDS TAB --- */}
+        {activeTab === 'brands' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in bg-background">
+            {/* Left: Add/Edit Brand Form */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-custom p-6 shadow-custom border border-gray-100 sticky top-24">
+                <h3 className="text-lg font-bold text-dark mb-4 border-b border-gray-100 pb-2">
+                  {editBrandMode ? 'Edit Partner Brand' : 'Add Partner Brand'}
+                </h3>
+
+                {brandFormMessage && (
+                  <div
+                    className={`p-3 rounded-lg text-sm mb-4 ${
+                      brandFormMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+                    }`}
+                  >
+                    {brandFormMessage.text}
+                  </div>
+                )}
+
+                <form onSubmit={handleBrandSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-dark mb-1">Brand Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={brandFormData.name}
+                      onChange={(e) => setBrandFormData({ ...brandFormData, name: e.target.value })}
+                      placeholder="e.g. IFFCO"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-dark mb-1">Primary Category *</label>
+                    <select
+                      value={brandFormData.category}
+                      onChange={(e) => setBrandFormData({ ...brandFormData, category: e.target.value })}
+                      required
+                      className="w-full h-10 px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white text-dark custom-select"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-dark mb-1">Description / Dealer Status</label>
+                    <textarea
+                      value={brandFormData.desc_text}
+                      onChange={(e) => setBrandFormData({ ...brandFormData, desc_text: e.target.value })}
+                      rows="3"
+                      placeholder="e.g. Indian Farmers Fertiliser Cooperative Limited..."
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-dark mb-1">Brand Logo (Optional)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBrandFileChange}
+                      className="w-full text-xs text-lightText file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-primary/20"
+                    />
+                    {brandFormData.logo_url && !brandLogoFile && (
+                      <div className="mt-2 flex items-center gap-2 animate-fade-in">
+                        <img src={brandFormData.logo_url} alt="Current logo" className="w-12 h-12 object-contain bg-gray-50 border p-1 rounded" />
+                        <span className="text-[10px] text-lightText truncate max-w-[150px]">Current Logo</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3 pt-4 border-t border-gray-150">
+                    <button
+                      type="submit"
+                      disabled={loading || brandUploading}
+                      className="flex-1 bg-primary hover:bg-accent text-white py-2 rounded-full text-sm font-semibold transition-colors disabled:opacity-50"
+                    >
+                      {brandUploading ? 'Uploading...' : loading ? 'Saving...' : editBrandMode ? 'Update' : 'Save'}
+                    </button>
+                    {editBrandMode && (
+                      <button
+                        type="button"
+                        onClick={resetBrandForm}
+                        className="bg-gray-150 hover:bg-gray-200 text-dark px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            {/* Right: Brand Listings Table */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-custom shadow-custom border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                  <h3 className="text-lg font-bold text-dark">Category Inventory</h3>
+                  <h3 className="text-lg font-bold text-dark">Partner Brands</h3>
                 </div>
 
-                {categories.length === 0 ? (
+                {brands.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-lightText">No categories created yet. Seed them using the SQL script or create one on the left!</p>
+                    <p className="text-lightText">No brands loaded. Add a partner brand on the left!</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-dark uppercase">
-                          <th className="p-4">Category Name</th>
+                          <th className="p-4">Brand Logo / Name</th>
+                          <th className="p-4">Primary Category</th>
                           <th className="p-4 text-center">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 text-sm">
-                        {categories.map((cat) => (
-                          <tr key={cat.id} className="hover:bg-gray-50/50 transition-colors">
-                            <td className="p-4 font-semibold text-dark">{cat.name}</td>
+                        {brands.map((br) => (
+                          <tr key={br.id} className="hover:bg-gray-50/50 transition-colors">
                             <td className="p-4">
-                              <div className="flex justify-center">
+                              <div className="flex items-center gap-3">
+                                {br.logo_url ? (
+                                  <img
+                                    src={br.logo_url}
+                                    alt={br.name}
+                                    className="w-12 h-12 object-contain bg-gray-50 border p-1 rounded-lg flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 bg-gray-100 text-lightText rounded-lg flex-shrink-0 flex items-center justify-center font-bold text-xs">
+                                    No Logo
+                                  </div>
+                                )}
+                                <div>
+                                  <h4 className="font-semibold text-dark">{br.name}</h4>
+                                  <p className="text-[10px] text-lightText truncate max-w-[200px]">{br.desc_text}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-xs bg-primary-light text-primary px-2.5 py-0.5 rounded-full font-medium">
+                                {br.category}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex gap-3 justify-center">
                                 <button
-                                  onClick={() => handleCategoryDeleteClick(cat.id, cat.name)}
+                                  onClick={() => handleBrandEditClick(br)}
+                                  className="text-blue-500 hover:text-blue-700 transition-colors"
+                                  title="Edit"
+                                >
+                                  <i className="fa-solid fa-pen-to-square text-base"></i>
+                                </button>
+                                <button
+                                  onClick={() => handleBrandDeleteClick(br.id)}
                                   className="text-red-500 hover:text-red-700 transition-colors"
                                   title="Delete"
                                 >
@@ -895,7 +1401,6 @@ function Admin() {
                               <div className="flex gap-4 items-center justify-center">
                                 {/* Arrange Buttons */}
                                 <div className="flex gap-1">
-                                  {/* Up button swaps timestamp with item index - 1. Because sorting is descending, moving up means swap with newer timestamp (idx - 1) */}
                                   <button
                                     onClick={() => handleMoveGalleryImage(idx, 'up')}
                                     disabled={idx === 0 || loading}
@@ -904,7 +1409,6 @@ function Admin() {
                                   >
                                     <i className="fa-solid fa-arrow-up text-xs"></i>
                                   </button>
-                                  {/* Down button swaps timestamp with item index + 1 */}
                                   <button
                                     onClick={() => handleMoveGalleryImage(idx, 'down')}
                                     disabled={idx === galleryImages.length - 1 || loading}
@@ -914,7 +1418,7 @@ function Admin() {
                                     <i className="fa-solid fa-arrow-down text-xs"></i>
                                   </button>
                                 </div>
-                                <div className="w-[1px] h-5 bg-gray-200"></div>
+                                <div className="w-[1px] h-5 bg-gray-250"></div>
                                 <button
                                   onClick={() => handleGalleryDeleteClick(img.id)}
                                   className="text-red-500 hover:text-red-700 transition-colors"
