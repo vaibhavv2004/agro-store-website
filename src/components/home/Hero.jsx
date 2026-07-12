@@ -8,8 +8,8 @@ function Hero() {
           {/* Left Content */}
           <div className="flex flex-col items-start justify-between h-full">
             <div className="w-full">
-              <span className="bg-primary-light text-primary px-4 py-2 rounded-full font-semibold text-sm">
-                🌱 Trusted Agricultural Store
+              <span className="bg-primary-light text-primary px-4 py-2 rounded-full font-semibold text-sm inline-flex items-center gap-1.5">
+                <i className="fa-solid fa-leaf"></i> Trusted Agricultural Store
               </span>
               
               <h1 className="text-4xl sm:text-5xl lg:text-[3.3rem] font-bold text-dark mt-6 leading-tight">
@@ -35,15 +35,21 @@ function Hero() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-6 sm:gap-12 mt-12 pt-8 border-t border-borderCol w-full">
               <div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-primary">👨‍🌾 500+</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-primary flex items-center gap-2">
+                  <i className="fa-solid fa-users text-xl sm:text-2xl"></i> 500+
+                </h3>
                 <p className="text-lightText text-xs sm:text-sm mt-1">Happy Customers</p>
               </div>
               <div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-primary">🏢 50+</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-primary flex items-center gap-2">
+                  <i className="fa-solid fa-handshake text-xl sm:text-2xl"></i> 50+
+                </h3>
                 <p className="text-lightText text-xs sm:text-sm mt-1">Trusted Brands</p>
               </div>
               <div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-primary">📦 500+</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold text-primary flex items-center gap-2">
+                  <i className="fa-solid fa-basket-shopping text-xl sm:text-2xl"></i> 500+
+                </h3>
                 <p className="text-lightText text-xs sm:text-sm mt-1">Products</p>
               </div>
             </div>
