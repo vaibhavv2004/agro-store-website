@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import LanguageModal from './LanguageModal';
 import { useCart } from '../context/CartContext';
 
 function Layout() {
@@ -12,6 +13,7 @@ function Layout() {
 
   return (
     <div className="flex flex-col min-h-screen relative pb-16 md:pb-0">
+      <LanguageModal />
       <Navbar />
       <main className="flex-grow">
         <Outlet />

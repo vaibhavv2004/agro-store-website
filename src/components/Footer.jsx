@@ -85,7 +85,14 @@ function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-gray-400 text-sm">
                 <i className="fa-solid fa-location-dot mt-1 text-secondary"></i>
-                <span>Eachur, Kannur, Kerala</span>
+                <a 
+                  href="https://maps.app.goo.gl/UdKg31z9usd4DFJV7?g_st=am" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-secondary transition-colors duration-300"
+                >
+                  Eachur, Kannur, Kerala
+                </a>
               </li>
               <li className="flex items-center gap-3 text-gray-400 text-sm">
                 <i className="fa-solid fa-phone text-secondary"></i>

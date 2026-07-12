@@ -1,44 +1,56 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
 import { supabase } from '../supabaseClient';
+import { useCart } from '../context/CartContext';
+import Loader from '../components/Loader';
+
+const FALLBACK_CATEGORIES = ['All', 'Seeds', 'Fertilizers', 'Crop Protection', 'Organic Products', 'Sprayers', 'Garden Products'];
+const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=600';
 
 const ALL_PRODUCTS = [
-  { id: 1, name: 'Hybrid Tomato Seeds', category: 'Seeds', price: '₹45', img: 'tomato_seed.jpg', desc: 'High-yield hybrid tomato seeds with high disease resistance.' },
-  { id: 2, name: 'Organic NPK Fertilizer', category: 'Fertilizers', price: '₹220', img: 'npk.jpg', desc: 'Balanced nitrogen, phosphorus, and potassium mix for crops.' },
-  { id: 3, name: 'Eco Neem Oil Spray', category: 'Crop Protection', price: '₹180', img: 'neem_oil.jpg', desc: 'Natural pest repellent and insecticide for garden plants.' },
-  { id: 4, name: 'Bio-Compost Organic Manure', category: 'Organic Products', price: '₹120', img: 'manure.jpg', desc: '100% organic decomposed manure for enhanced soil fertility.' },
-  { id: 5, name: '16L Battery Sprayer', category: 'Sprayers', price: '₹2,450', img: 'sprayer_battery.jpg', desc: 'Rechargeable battery-operated sprayer with multi-nozzle attachments.' },
-  { id: 6, name: 'Premium Terracotta Pots', category: 'Garden Products', price: '₹90', img: 'pots.jpg', desc: 'Durable clay pots ideal for indoor and outdoor plants.' },
-  { id: 7, name: 'Sweet Corn Seeds', category: 'Seeds', price: '₹60', img: 'corn_seed.jpg', desc: 'Premium grade sweet corn seeds for farm sowing.' },
-  { id: 8, name: 'Urea Fertilizer 5kg', category: 'Fertilizers', price: '₹150', img: 'urea.jpg', desc: 'High nitrogen chemical fertilizer for rapid crop growth.' },
-  { id: 9, name: 'Broad Spectrum Fungicide', category: 'Crop Protection', price: '₹350', img: 'fungicide.jpg', desc: 'Effective protection against leaf blight and powder mildew.' },
-  { id: 10, name: 'Vermicompost Premium', category: 'Organic Products', price: '₹140', img: 'vermi.jpg', desc: 'Worm-composted soil conditioner enriched with micro-nutrients.' },
-  { id: 11, name: 'Manual Pressure Sprayer 2L', category: 'Sprayers', price: '₹250', img: 'sprayer_2l.jpg', desc: 'Handy garden sprayer for watering and foliar feeding.' },
-  { id: 12, name: 'Premium Hand Trowel', category: 'Garden Products', price: '₹110', img: 'trowel.jpg', desc: 'Ergonomic stainless steel hand trowel for planting.' }
+  { id: 1, name: 'Premium Tomato Seeds', category: 'Seeds', price: '₹49', desc: 'High-yield hybrid tomato seeds, disease resistant.', img_url: '/assets/images/products/seeds1.jpg' },
+  { id: 2, name: 'Organic NPK Fertilizer', category: 'Fertilizers', price: '₹299', desc: '100% organic nitrogen, phosphorus, and potassium mix.', img_url: '/assets/images/products/fertilizer1.jpg' },
+  { id: 3, name: 'Neem Oil Pest Spray', category: 'Crop Protection', price: '₹180', desc: 'Natural organic insect killer and fungicide.', img_url: '/assets/images/products/pesticide1.jpg' },
+  { id: 4, name: 'Battery Knapsack Sprayer', category: 'Sprayers', price: '₹1999', desc: '16L capacity, durable battery, multiple nozzles.', img_url: '/assets/images/products/sprayer1.jpg' },
+  { id: 5, name: 'Biodegradable Plant Pots', category: 'Garden Products', price: '₹120', desc: 'Pack of 12 eco-friendly coco-peat seed starting pots.', img_url: '/assets/images/products/pot1.jpg' }
 ];
 
-const BASE_CATEGORIES = ['All', 'Seeds', 'Fertilizers', 'Crop Protection', 'Organic Products', 'Sprayers', 'Garden Products'];
+import { useLanguage } from '../context/LanguageContext';
 
 function Products() {
   const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [categories, setCategories] = useState(BASE_CATEGORIES);
+  const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
   const [searchQuery, setSearchQuery] = useState('');
   const { cart, addToCart, updateQuantity } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { translateDbText } = useLanguage();
 
   useEffect(() => {
     if (location.state && location.state.category) {
       setSelectedCategory(location.state.category);
     }
-    fetchProducts();
+    fetchCategoriesAndProducts();
   }, [location]);
 
-  const fetchProducts = async () => {
+  const fetchCategoriesAndProducts = async () => {
     try {
       setLoading(true);
+      
+      // 1. Fetch categories
+      const { data: catData, error: catError } = await supabase
+        .from('categories')
+        .select('name')
+        .order('created_at', { ascending: true });
+        
+      if (!catError && catData && catData.length > 0) {
+        setCategories(['All', ...catData.map(c => c.name)]);
+      } else {
+        setCategories(FALLBACK_CATEGORIES);
+      }
+
+      // 2. Fetch products
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -48,16 +60,13 @@ function Products() {
 
       if (data && data.length > 0) {
         setProducts(data);
-        const uniqueCategories = [...new Set(data.map(p => p.category))];
-        setCategories(['All', ...new Set([...BASE_CATEGORIES.slice(1), ...uniqueCategories])]);
       } else {
         setProducts(ALL_PRODUCTS);
-        const uniqueCategories = [...new Set(ALL_PRODUCTS.map(p => p.category))];
-        setCategories(['All', ...new Set([...BASE_CATEGORIES.slice(1), ...uniqueCategories])]);
       }
     } catch (err) {
-      console.warn('Could not fetch products from database, using fallback data:', err.message);
+      console.warn('Could not fetch data from database, using fallback data:', err.message);
       setProducts(ALL_PRODUCTS);
+      setCategories(FALLBACK_CATEGORIES);
     } finally {
       setLoading(false);
     }
@@ -67,21 +76,46 @@ function Products() {
     return cart.find(item => item.id === productId);
   };
 
+  const getCategoryTranslation = (cat) => {
+    return cat;
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (product.description || product.desc || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = translateDbText(product, 'name').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          translateDbText(product, product.description ? 'description' : 'desc').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
   return (
     <div className="bg-background min-h-screen pb-16">
       {/* Header Banner */}
-      <section className="bg-primary text-white py-16 text-center">
-        <h1 className="text-4xl font-bold">Our Agricultural Products</h1>
-        <p className="mt-4 text-white/80 max-w-xl mx-auto px-4">
-          Browse through our curated list of high-quality products for all your farming and gardening needs.
-        </p>
+      <section className="relative bg-dark h-52 sm:h-60 flex items-center justify-center text-center overflow-hidden">
+        {/* Background Image with Green Color Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-30 scale-105" 
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80&w=1200')` }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-[#1B4D2A]/90"></div>
+        
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="leaf-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M20 5 C25 15, 35 15, 35 25 C35 35, 25 35, 20 20 C15 35, 5 35, 5 25 C5 15, 15 15, 20 5 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#leaf-pattern)" />
+          </svg>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <h1 className="text-4xl font-bold text-white">Our Products</h1>
+          <p className="mt-4 text-white max-w-xl mx-auto px-4">
+            Explore our wide range of high-quality seeds, fertilizers, crop protection and garden products.
+          </p>
+        </div>
       </section>
 
       {/* Main Content */}
@@ -97,7 +131,7 @@ function Products() {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-6"
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-6 animate-fade-in"
               />
 
               <h3 className="text-lg font-bold text-dark mb-4">Categories</h3>
@@ -112,7 +146,7 @@ function Products() {
                         : 'bg-gray-50 text-dark hover:bg-gray-100'
                     }`}
                   >
-                    {cat}
+                    {getCategoryTranslation(cat)}
                   </button>
                 ))}
               </div>
@@ -122,12 +156,12 @@ function Products() {
           {/* Products Grid */}
           <div className="w-full lg:w-3/4">
             {loading && products.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-custom shadow-sm">
-                <p className="text-lightText text-lg">Loading products...</p>
+              <div className="bg-white rounded-custom shadow-sm py-12">
+                <Loader message="Nourishing the catalog..." />
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-custom shadow-sm">
-                <p className="text-lightText text-lg">No products found matching your criteria.</p>
+                <p className="text-lightText text-lg">No products found matching your filter.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -135,18 +169,22 @@ function Products() {
                   <div key={prod.id} className="bg-white rounded-custom overflow-hidden shadow-custom border border-gray-100 flex flex-col justify-between h-full group">
                     <div className="aspect-square bg-gray-50 overflow-hidden relative">
                       <img
-                        src={prod.img_url || `https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&q=80&w=400&sig=${prod.id}`}
-                        alt={prod.name}
+                        src={prod.img_url || DEFAULT_FALLBACK_IMAGE}
+                        alt={translateDbText(prod, 'name')}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = DEFAULT_FALLBACK_IMAGE;
+                        }}
                       />
                       <span className="absolute top-3 right-3 bg-secondary text-white text-xs font-semibold px-2.5 py-1 rounded-full">
-                        {prod.category}
+                        {getCategoryTranslation(prod.category)}
                       </span>
                     </div>
                     <div className="p-5 flex-grow flex flex-col justify-between">
                       <div>
-                        <h4 className="font-bold text-dark text-lg mb-2">{prod.name}</h4>
-                        <p className="text-lightText text-xs leading-relaxed mb-4">{prod.description || prod.desc}</p>
+                        <h4 className="font-bold text-dark text-lg mb-2">{translateDbText(prod, 'name')}</h4>
+                        <p className="text-lightText text-xs leading-relaxed mb-4">{translateDbText(prod, prod.description ? 'description' : 'desc')}</p>
                       </div>
                       <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-auto">
                         <span className="text-primary font-bold text-lg">{prod.price}</span>
@@ -197,5 +235,3 @@ function Products() {
 }
 
 export default Products;
-
-

@@ -90,3 +90,18 @@ To register the email and password you will use to log in to the admin panel:
 2. Navigate to `http://localhost:5173/admin` (or the URL shown in your terminal).
 3. Log in using the email and password you created in Step 4.
 4. Add a test product. You can type details, select a category, upload an image, and save. It will appear immediately in your inventory table on the right and load on the `/products` page!
+
+---
+
+## 6. Enabling Multi-Language Database Translation Support
+To translate dynamic product data (names and descriptions) stored inside the database into Malayalam (`ml`), you need to add translated columns to your `products` table.
+
+1. Go to the **SQL Editor** in the Supabase Dashboard.
+2. Click **New Query**.
+3. Paste and run the following SQL command:
+   ```sql
+   -- Add columns for Malayalam translation
+   ALTER TABLE public.products ADD COLUMN name_ml text;
+   ALTER TABLE public.products ADD COLUMN description_ml text;
+   ```
+4. Once completed, your Admin panel will display input fields for both English and Malayalam names and descriptions. The frontend will dynamically display the Malayalam translations to users who select Malayalam!

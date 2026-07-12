@@ -4,10 +4,29 @@ function About() {
   return (
     <div>
       {/* Page Header */}
-      <section className="bg-primary text-white py-16 text-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold">About Eachur Agro Store</h1>
-          <p className="mt-4 text-white/80 max-w-xl mx-auto">
+      <section className="relative bg-dark h-52 sm:h-60 flex items-center justify-center text-center overflow-hidden">
+        {/* Background Image with Green Color Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-30 scale-105" 
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80&w=1200')` }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-[#1B4D2A]/90"></div>
+        
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="leaf-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M20 5 C25 15, 35 15, 35 25 C35 35, 25 35, 20 20 C15 35, 5 35, 5 25 C5 15, 15 15, 20 5 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#leaf-pattern)" />
+          </svg>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <h1 className="text-4xl font-bold text-white">About Eachur Agro Store</h1>
+          <p className="mt-4 text-white max-w-xl mx-auto">
             Empowering Kanur's agricultural community with quality inputs and professional advice since inception.
           </p>
         </div>

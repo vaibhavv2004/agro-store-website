@@ -16,11 +16,32 @@ function Contact() {
   return (
     <div className="bg-background min-h-screen pb-16">
       {/* Header Banner */}
-      <section className="bg-primary text-white py-16 text-center">
-        <h1 className="text-4xl font-bold">Contact Eachur Agro Store</h1>
-        <p className="mt-4 text-white/80 max-w-xl mx-auto px-4">
-          Have inquiries or need advice? Send us a message or visit our store.
-        </p>
+      <section className="relative bg-dark h-52 sm:h-60 flex items-center justify-center text-center overflow-hidden">
+        {/* Background Image with Green Color Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-30 scale-105" 
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80&w=1200')` }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-[#1B4D2A]/90"></div>
+        
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="leaf-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M20 5 C25 15, 35 15, 35 25 C35 35, 25 35, 20 20 C15 35, 5 35, 5 25 C5 15, 15 15, 20 5 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#leaf-pattern)" />
+          </svg>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <h1 className="text-4xl font-bold text-white">Contact Eachur Agro Store</h1>
+          <p className="mt-4 text-white max-w-xl mx-auto px-4">
+            Have inquiries or need advice? Send us a message or visit our store.
+          </p>
+        </div>
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
@@ -133,7 +154,7 @@ function Contact() {
               </div>
 
               <div className="flex flex-wrap gap-4 pt-4">
-                <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="btn-primary-custom flex items-center gap-2">
+                <a href="https://maps.app.goo.gl/UdKg31z9usd4DFJV7?g_st=am" target="_blank" rel="noopener noreferrer" className="btn-primary-custom flex items-center gap-2">
                   <i className="fa-solid fa-location-arrow"></i> Get Directions
                 </a>
                 <a href="tel:+919446062168" className="btn-outline-success flex items-center gap-2">
@@ -142,8 +163,13 @@ function Contact() {
               </div>
             </div>
 
-            {/* Visual Store Map Placeholder */}
-            <div className="rounded-custom overflow-hidden shadow-sm aspect-video bg-gray-150 relative">
+            {/* Visual Store Map Placeholder wrapped as link */}
+            <a 
+              href="https://maps.app.goo.gl/UdKg31z9usd4DFJV7?g_st=am" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="block rounded-custom overflow-hidden shadow-sm aspect-video bg-gray-150 relative hover:opacity-90 transition-all duration-300 group"
+            >
               <img 
                 src="/assets/images/about/store.png" 
                 alt="Store Map Location" 
@@ -153,7 +179,12 @@ function Contact() {
                   e.target.src = 'https://images.unsplash.com/photo-1589923188900-85dae023348b?auto=format&fit=crop&q=80&w=800';
                 }}
               />
-            </div>
+              <div className="absolute inset-0 bg-black/10 hover:bg-black/0 transition-colors flex items-center justify-center">
+                <span className="bg-white/90 text-dark font-semibold text-xs px-3 py-1.5 rounded-full shadow-sm">
+                  📍 Click to view on Google Maps
+                </span>
+              </div>
+            </a>
           </div>
 
         </div>

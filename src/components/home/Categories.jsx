@@ -1,16 +1,66 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../supabaseClient';
+
+const PRESETS = {
+  'Seeds': { icon: '🌱', desc: 'High quality vegetable, fruit and crop seeds.' },
+  'Fertilizers': { icon: '🌾', desc: 'Organic and chemical fertilizers for all crops.' },
+  'Crop Protection': { icon: '🧪', desc: 'Pesticides, fungicides and insecticides.' },
+  'Organic Products': { icon: '🌿', desc: 'Bio fertilizers, compost and eco-friendly solutions.' },
+  'Sprayers': { icon: '🚿', desc: 'Manual and battery-operated agricultural sprayers.' },
+  'Garden Products': { icon: '🪴', desc: 'Pots, tools, plants and home gardening essentials.' }
+};
+
+const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=600';
 
 function Categories() {
   const navigate = useNavigate();
+  const [categories, setCategories] = useState([]);
 
-  const categories = [
-    { icon: '🌱', title: 'Seeds', desc: 'High quality vegetable, fruit and crop seeds.' },
-    { icon: '🌾', title: 'Fertilizers', desc: 'Organic and chemical fertilizers for all crops.' },
-    { icon: '🧪', title: 'Crop Protection', desc: 'Pesticides, fungicides and insecticides.' },
-    { icon: '🌿', title: 'Organic Products', desc: 'Bio fertilizers, compost and eco-friendly solutions.' },
-    { icon: '🚿', title: 'Sprayers', desc: 'Manual and battery-operated agricultural sprayers.' },
-    { icon: '🪴', title: 'Garden Products', desc: 'Pots, tools, plants and home gardening essentials.' }
-  ];
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('name')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const mapped = data.map(cat => {
+          const preset = PRESETS[cat.name] || { icon: '📦', desc: 'Quality agricultural products and solutions.' };
+          return {
+            title: cat.name,
+            icon: preset.icon,
+            desc: preset.desc
+          };
+        });
+        setCategories(mapped);
+      } else {
+        // Fallback static list
+        setCategories(
+          Object.keys(PRESETS).map(key => ({
+            title: key,
+            icon: PRESETS[key].icon,
+            desc: PRESETS[key].desc
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn('Could not fetch categories from database:', err.message);
+      setCategories(
+        Object.keys(PRESETS).map(key => ({
+          title: key,
+          icon: PRESETS[key].icon,
+          desc: PRESETS[key].desc
+        }))
+      );
+    }
+  };
 
   return (
     <section className="bg-white py-20">
